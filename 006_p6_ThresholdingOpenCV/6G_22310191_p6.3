@@ -1,0 +1,90 @@
+
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Leer y redimensionar imagen
+img = cv2.imread('storm.jpg')
+img = cv2.resize(img, (350, 450))
+if img is None:
+    print(" No se pudo cargar la imagen.")
+    exit()
+img = cv2.resize(img, (0, 0), fx=0.3, fy=0.3)
+
+# Convertir a HSV
+hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+# === FILTRO ROJO ===
+lower_red1 = np.array([0, 120, 70])
+upper_red1 = np.array([10, 255, 255])
+lower_red2 = np.array([170, 120, 70])
+upper_red2 = np.array([180, 255, 255])
+mask_red1 = cv2.inRange(hsv, lower_red1, upper_red1)
+mask_red2 = cv2.inRange(hsv, lower_red2, upper_red2)
+mask_red = cv2.bitwise_or(mask_red1, mask_red2)
+red = cv2.bitwise_and(img, img, mask=mask_red)
+
+# === FILTRO VERDE ===
+lower_green = np.array([35, 50, 50])
+upper_green = np.array([85, 255, 255])
+mask_green = cv2.inRange(hsv, lower_green, upper_green)
+green = cv2.bitwise_and(img, img, mask=mask_green)
+
+# === FILTRO AZUL ===
+lower_blue = np.array([90, 50, 50])
+upper_blue = np.array([130, 255, 255])
+mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
+blue = cv2.bitwise_and(img, img, mask=mask_blue)
+
+# === RGB "filtro" visual ===
+b, g, r = cv2.split(img)
+zeros = np.zeros_like(b)
+rgb_red = cv2.merge([zeros, zeros, r])
+rgb_green = cv2.merge([zeros, g, zeros])
+rgb_blue = cv2.merge([b, zeros, zeros])
+rgb_combined = cv2.merge([b, g, r])  # Imagen RGB "real"
+
+# === YUV visual ===
+yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
+y, u, v = cv2.split(yuv)
+yuv_simulated = cv2.merge([y, u, v])
+yuv_display = cv2.cvtColor(yuv_simulated, cv2.COLOR_YUV2BGR)
+
+# === HSV visual ===
+hsv_display = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
+# === Mostrar todo en una sola ventana con matplotlib ===
+plt.figure(figsize=(10, 6))
+
+plt.subplot(2, 3, 1)
+plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+plt.title("Original (BGR)")
+plt.axis("off")
+
+plt.subplot(2, 3, 2)
+plt.imshow(cv2.cvtColor(red, cv2.COLOR_BGR2RGB))
+plt.title("Filtro Rojo")
+plt.axis("off")
+
+plt.subplot(2, 3, 3)
+plt.imshow(cv2.cvtColor(green, cv2.COLOR_BGR2RGB))
+plt.title("Filtro Verde")
+plt.axis("off")
+
+plt.subplot(2, 3, 4)
+plt.imshow(cv2.cvtColor(blue, cv2.COLOR_BGR2RGB))
+plt.title("Filtro Azul")
+plt.axis("off")
+
+plt.subplot(2, 3, 5)
+plt.imshow(cv2.cvtColor(rgb_combined, cv2.COLOR_BGR2RGB))
+plt.title("RGB")
+plt.axis("off")
+
+plt.subplot(2, 3, 6)
+plt.imshow(cv2.cvtColor(yuv_display, cv2.COLOR_BGR2RGB))
+plt.title("YUV")
+plt.axis("off")
+
+plt.tight_layout()
+plt.show()
